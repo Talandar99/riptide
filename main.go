@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 type Config struct {
-	ScriptsPath []string `toml:"scripts_path"`
+	ScriptsPath string `toml:"scripts_path"`
 }
 
 func read_config() Config {
@@ -23,14 +24,12 @@ func read_config() Config {
 func getScriptsList() []string {
 	config := read_config()
 	var scripts []string
-	for _, path := range config.ScriptsPath {
-		cmd := exec.Command("ls", path)
-		output, _ := cmd.CombinedOutput()
-		for line := range strings.SplitSeq(string(output), "\n") {
-			line = strings.TrimSpace(line)
-			if line != "" {
-				scripts = append(scripts, line)
-			}
+	cmd := exec.Command("ls", config.ScriptsPath)
+	output, _ := cmd.CombinedOutput()
+	for line := range strings.SplitSeq(string(output), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			scripts = append(scripts, line)
 		}
 	}
 	return scripts
@@ -94,6 +93,7 @@ func removeFlagsFromList(list []string, flags []string) []string {
 
 func getFlagsFromlist(list []string) []string {
 	var flagWithArgs []string
+
 	for i, programArg := range list {
 		fmt.Println(programArg)
 		if strings.Contains(programArg, "-r") {
@@ -106,6 +106,63 @@ func getFlagsFromlist(list []string) []string {
 	return flagWithArgs
 }
 
+func runCommand(command string) {
+	fmt.Println("Running: " + command)
+	config := read_config()
+	fullCommand := config.ScriptsPath + command
+	cmd := exec.Command(fullCommand)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func runRemoteCommand(command string, address string) {
+	fmt.Println("Running: " + command)
+	config := read_config()
+
+	fullCommand := config.ScriptsPath + command
+
+	cmd := exec.Command("scp " + fullCommand + " " + address + "~/" + command)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	cmd = exec.Command(" " + fullCommand + " " + address + "~/" + command)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func runRemotely(programArgs []string, flagWithArgs []string) {
+	if len(flagWithArgs) > 2 {
+		//for _, program := range programArgs {
+		//cmd := exec.Command("ls", path)
+		//}
+	} else {
+		fmt.Println("missing address ")
+		fmt.Println("try:")
+		fmt.Println("riptide some_script.sh -r xyz@xyz.xyz")
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
 func riptide(scriptsList []string) {
 	fmt.Println(scriptsList)
 	programArgs := os.Args[1:]
@@ -115,11 +172,27 @@ func riptide(scriptsList []string) {
 
 	programArgs = removeFlagsFromList(programArgs, flagWithArgs)
 	fmt.Println(programArgs)
+
+	if len(flagWithArgs) > 0 {
+		switch flagWithArgs[0] {
+		case "-r":
+			runRemotely(programArgs, flagWithArgs)
+			os.Exit(0)
+		default:
+			fmt.Println("Unknown Flag")
+			os.Exit(0)
+		}
+	}
+	for _, arg := range programArgs {
+		runCommand(arg)
+	}
+	os.Exit(0)
 }
 
 func main() {
 	progName := filepath.Base(os.Args[0])
 	scriptsList := getScriptsList()
+
 	if strings.Contains(progName, "completion") {
 		completion(scriptsList)
 	} else {
