@@ -12,7 +12,7 @@ import (
 )
 
 type Config struct {
-	ScriptsPath string `toml:"scripts_path"`
+	ScriptsPath []string `toml:"scripts_path"`
 }
 
 func read_config() Config {
@@ -21,18 +21,23 @@ func read_config() Config {
 	return config
 }
 
-func getScriptsList() []string {
+func getScriptsList() [][]string {
 	config := read_config()
-	var scripts []string
-	cmd := exec.Command("ls", config.ScriptsPath)
-	output, _ := cmd.CombinedOutput()
-	for line := range strings.SplitSeq(string(output), "\n") {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			scripts = append(scripts, line)
+	var scriptsWithPath [][]string
+
+	for _, scriptDirectory := range config.ScriptsPath {
+		lsOutput, _ := exec.Command("ls", scriptDirectory).CombinedOutput()
+
+		for lsOutputElement := range strings.SplitSeq(string(lsOutput), "\n") {
+			lsOutputElement = strings.TrimSpace(lsOutputElement)
+
+			if lsOutputElement != "" {
+				scriptsWithPath = append(scriptsWithPath, []string{scriptDirectory, lsOutputElement})
+			}
 		}
+
 	}
-	return scripts
+	return scriptsWithPath
 }
 
 func alreadyCompleted(completion_options []string) bool {
@@ -108,9 +113,7 @@ func getFlagsFromlist(list []string) []string {
 
 func runCommand(command string) {
 	fmt.Println("Running: " + command)
-	config := read_config()
-	fullCommand := config.ScriptsPath + command
-	cmd := exec.Command(fullCommand)
+	cmd := exec.Command(command)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -122,76 +125,77 @@ func runCommand(command string) {
 	}
 }
 
-func runRemoteCommand(command string, address string) {
-	fmt.Println("Running: " + command)
-	config := read_config()
+//func runRemoteCommand(command string, address string) {
+//	fmt.Println("Running: " + command)
+//	config := read_config()
+//
+//	fullCommand := config.ScriptsPath + command
+//
+//	cmd := exec.Command("scp " + fullCommand + " " + address + "~/" + command)
+//	cmd.Stdout = os.Stdout
+//	cmd.Stderr = os.Stderr
+//	cmd.Stdin = os.Stdin
+//
+//	err := cmd.Run()
+//	if err != nil {
+//		fmt.Println(err)
+//	}
+//
+//	cmd = exec.Command(" " + fullCommand + " " + address + "~/" + command)
+//	cmd.Stdout = os.Stdout
+//	cmd.Stderr = os.Stderr
+//	cmd.Stdin = os.Stdin
+//
+//	err = cmd.Run()
+//	if err != nil {
+//		fmt.Println(err)
+//	}
+//}
+//
+//func runRemotely(programArgs []string, flagWithArgs []string) {
+//	if len(flagWithArgs) > 2 {
+//		//for _, program := range programArgs {
+//		//cmd := exec.Command("ls", path)
+//		//}
+//	} else {
+//		fmt.Println("missing address ")
+//		fmt.Println("try:")
+//		fmt.Println("riptide some_script.sh -r xyz@xyz.xyz")
+//		os.Exit(1)
+//	}
+//	os.Exit(0)
+//}
 
-	fullCommand := config.ScriptsPath + command
-
-	cmd := exec.Command("scp " + fullCommand + " " + address + "~/" + command)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	cmd = exec.Command(" " + fullCommand + " " + address + "~/" + command)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	err = cmd.Run()
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func runRemotely(programArgs []string, flagWithArgs []string) {
-	if len(flagWithArgs) > 2 {
-		//for _, program := range programArgs {
-		//cmd := exec.Command("ls", path)
-		//}
-	} else {
-		fmt.Println("missing address ")
-		fmt.Println("try:")
-		fmt.Println("riptide some_script.sh -r xyz@xyz.xyz")
-		os.Exit(1)
-	}
-	os.Exit(0)
-}
-
-func riptide(scriptsList []string) {
-	fmt.Println(scriptsList)
-	programArgs := os.Args[1:]
-
-	var flagWithArgs = getFlagsFromlist(programArgs)
-	fmt.Println(flagWithArgs)
-
-	programArgs = removeFlagsFromList(programArgs, flagWithArgs)
-	fmt.Println(programArgs)
-
-	if len(flagWithArgs) > 0 {
-		switch flagWithArgs[0] {
-		case "-r":
-			runRemotely(programArgs, flagWithArgs)
-			os.Exit(0)
-		default:
-			fmt.Println("Unknown Flag")
-			os.Exit(0)
-		}
-	}
-	for _, arg := range programArgs {
-		runCommand(arg)
-	}
-	os.Exit(0)
-}
+//func riptide(scriptsList []string) {
+//	fmt.Println(scriptsList)
+//	programArgs := os.Args[1:]
+//
+//	var flagWithArgs = getFlagsFromlist(programArgs)
+//	fmt.Println(flagWithArgs)
+//
+//	programArgs = removeFlagsFromList(programArgs, flagWithArgs)
+//	fmt.Println(programArgs)
+//
+//	if len(flagWithArgs) > 0 {
+//		switch flagWithArgs[0] {
+//		case "-r":
+//			runRemotely(programArgs, flagWithArgs)
+//			os.Exit(0)
+//		default:
+//			fmt.Println("Unknown Flag")
+//			os.Exit(0)
+//		}
+//	}
+//	for _, arg := range programArgs {
+//		runCommand(arg)
+//	}
+//	os.Exit(0)
+//}
 
 func main() {
-	progName := filepath.Base(os.Args[0])
+	//progName := filepath.Base(os.Args[0])
 	scriptsList := getScriptsList()
+	fmt.Println(scriptsList)
 
 	if strings.Contains(progName, "completion") {
 		completion(scriptsList)
