@@ -166,31 +166,31 @@ func runCommand(command string) {
 //	os.Exit(0)
 //}
 
-//func riptide(scriptsList []string) {
-//	fmt.Println(scriptsList)
-//	programArgs := os.Args[1:]
-//
-//	var flagWithArgs = getFlagsFromlist(programArgs)
-//	fmt.Println(flagWithArgs)
-//
-//	programArgs = removeFlagsFromList(programArgs, flagWithArgs)
-//	fmt.Println(programArgs)
-//
-//	if len(flagWithArgs) > 0 {
-//		switch flagWithArgs[0] {
-//		case "-r":
-//			runRemotely(programArgs, flagWithArgs)
-//			os.Exit(0)
-//		default:
-//			fmt.Println("Unknown Flag")
-//			os.Exit(0)
-//		}
-//	}
-//	for _, arg := range programArgs {
-//		runCommand(arg)
-//	}
-//	os.Exit(0)
-//}
+func riptide(scriptsList [][]string) {
+	fmt.Println(scriptsList)
+	programArgs := os.Args[1:]
+
+	var flagWithArgs = getFlagsFromlist(programArgs)
+	fmt.Println(flagWithArgs)
+
+	programArgs = removeFlagsFromList(programArgs, flagWithArgs)
+	fmt.Println(programArgs)
+
+	if len(flagWithArgs) > 0 {
+		switch flagWithArgs[0] {
+		case "-r":
+			runRemotely(programArgs, flagWithArgs)
+			os.Exit(0)
+		default:
+			fmt.Println("Unknown Flag")
+			os.Exit(0)
+		}
+	}
+	for _, arg := range programArgs {
+		runCommand(arg)
+	}
+	os.Exit(0)
+}
 
 func main() {
 	//progName := filepath.Base(os.Args[0])
@@ -198,7 +198,7 @@ func main() {
 	fmt.Println(scriptsList)
 
 	if strings.Contains(progName, "completion") {
-		completion(scriptsList)
+		//completion(scriptsList)
 	} else {
 		riptide(scriptsList)
 	}
