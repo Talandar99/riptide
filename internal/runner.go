@@ -6,9 +6,8 @@ import (
 	"os/exec"
 )
 
-func RunCommand(command string) {
-	fmt.Println("Running: " + command)
-	cmd := exec.Command(command)
+func runSystemCommands(command []string) {
+	cmd := exec.Command(command[0], command[1:]...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -18,4 +17,14 @@ func RunCommand(command string) {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func RunCommand(command Script) {
+	fmt.Println("Running: " + command.Path + command.Name)
+	runSystemCommands([]string{command.Path + command.Name})
+}
+func RunRemoteCommand(command Script, remoteAddress string) {
+	fmt.Println("Copying " + command.Name + " via scp to " + remoteAddress + "~/" + command.Name)
+	runSystemCommands([]string{"scp", command.Path + command.Name, remoteAddress + ":~/" + command.Name})
+	fmt.Println("Running: " + command.Name + "Remotely")
 }

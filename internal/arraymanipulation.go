@@ -10,7 +10,6 @@ func SeparateArgumentsAndFlags(list []string) ([]string, []string) {
 	var ProgArgWithoutFlags []string
 
 	for i, programArg := range list {
-		fmt.Println(programArg)
 		if strings.Contains(programArg, "-r") {
 			flagWithParameters = append(flagWithParameters, programArg)
 			if i+1 < len(list) {
@@ -32,4 +31,17 @@ func SeparateArgumentsAndFlags(list []string) ([]string, []string) {
 	}
 	return ProgArgWithoutFlags, flagWithParameters
 
+}
+func GetScriptsThatExists(programArg string, scriptsList []Script) (scriptsThatExists []Script) {
+	var scriptExist bool = false
+	for _, script := range scriptsList {
+		if script.Name == programArg {
+			scriptsThatExists = append(scriptsThatExists, script)
+			scriptExist = true
+		}
+	}
+	if !scriptExist {
+		fmt.Println("Command " + programArg + " does not exist")
+	}
+	return scriptsThatExists
 }

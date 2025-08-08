@@ -1,10 +1,9 @@
 package internal
 
 import (
+	"github.com/BurntSushi/toml"
 	"os/exec"
 	"strings"
-
-	"github.com/BurntSushi/toml"
 )
 
 type Config struct {
@@ -17,9 +16,10 @@ func read_config() Config {
 	return config
 }
 
-func GetScriptsList() [][]string {
+func GetScriptsList() []Script {
+
 	config := read_config()
-	var scriptsWithPath [][]string
+	var scripts []Script
 
 	for _, scriptDirectory := range config.ScriptsPath {
 		lsOutput, _ := exec.Command("ls", scriptDirectory).CombinedOutput()
@@ -28,10 +28,11 @@ func GetScriptsList() [][]string {
 			lsOutputElement = strings.TrimSpace(lsOutputElement)
 
 			if lsOutputElement != "" {
-				scriptsWithPath = append(scriptsWithPath, []string{scriptDirectory, lsOutputElement})
+				//scriptsWithPath = append(scriptsWithPath, []string{scriptDirectory, lsOutputElement})
+				scripts = append(scripts, Script{Name: lsOutputElement, Path: scriptDirectory})
 			}
 		}
 
 	}
-	return scriptsWithPath
+	return scripts
 }
